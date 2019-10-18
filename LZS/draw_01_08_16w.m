@@ -124,13 +124,13 @@ title('|w|')
 
 
 
-figure
-subplot(1,1,1,'FontSize',22);
-plot((Bbpmin+grate*ti),abs(w(45,:)),'LineWidth',2)
-hold on
-plot((Bbpmin+grate*ti),abs(w(33,:)),'red','LineWidth',2)
-ylabel('|w(52.8,t)|, |w(38.4,t)|')
-xlabel('Bbp')
+% figure
+% subplot(1,1,1,'FontSize',22);
+% plot((Bbpmin+grate*ti),abs(w(45,:)),'LineWidth',2)
+% hold on
+% plot((Bbpmin+grate*ti),abs(w(33,:)),'red','LineWidth',2)
+% ylabel('|w(52.8,t)|, |w(38.4,t)|')
+% xlabel('Bbp')
 
 figure
 subplot(1,1,1,'FontSize',22);
@@ -140,7 +140,7 @@ plot((Bbpmin+grate*ti(i1)),2*a(iamax(i1))+2*a(29),'*')
 ylabel('T')
 xlabel('Bbp')
 xlim([0.06 0.1])
-
+% 
 figure
 subplot(1,1,1,'FontSize',22);
 [amax,iamax]=max(abs(w(1:30,1:4000)));

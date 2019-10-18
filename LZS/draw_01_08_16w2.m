@@ -4,7 +4,7 @@ clc
 
 % Bpbmin=0.2;
 % Bpbmax=0.6;
-% Bbp=0.1;
+% Bbp=0.021;
 
 % Bpbmin=0.22;
 % Bpbmax=0.26;
@@ -12,7 +12,7 @@ clc
 
 Bpbmin=0.15;
 Bpbmax=0.25;
-Bbp=0.1;
+Bbp=0.08;
 
 %%
 % List of cases
@@ -111,8 +111,27 @@ title('|w|')
 % xlabel('t')
 % ylabel('\nu_p')
 % zlabel('H[\nu_p]')
-% 
-% iptsetpref('ImshowBorder','tight');
+
+iptsetpref('ImshowBorder','tight');
+
+%% Random IC
+
+n=100;
+
+for j=1:n
+    j
+    ve0=2*rand-1;
+    ue0=2*rand-1;
+    se0=rand;
+    vi0=2*rand-1;
+    ui0=2*rand-1;
+    si0=rand;
+    
+    f0=[ve0;ue0;se0;vi0;ui0;si0;];
+    [t,ve,ue,se,vi,ui,si]=FHN_syn_01_08_16m(f0,B);
+%     maxve(j)=max(ve);
+    T(j)=periodf(t,ve,0);
+end
 
 figure
 subplot(1,1,1,'FontSize',18);
@@ -120,4 +139,4 @@ binT=[10:10:160];
 hist(T,binT)
 xlabel('Period')
 ylabel('Fraction of attractors')
-
+    

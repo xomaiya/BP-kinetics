@@ -1,17 +1,20 @@
 import numpy as np
 
+
 def sAnalytics(v):
     N = len(v)  // 2
     F = np.fft.fft(v)
     F = np.concatenate([2 * F[0:N], np.zeros(N)])
     return np.fft.ifft(F)
 
+
 def fftMorlet(t, func, scale, omega0):
     N = len(t) // 2
     F = np.fft.fft(func)
     norm = 2 * np.pi / (t[-1] - t[0])
     omega = np.concatenate([np.arange(0, N + 1, 1), np.arange(-N + 1, 0)]) * norm
-    w = np.zeros((len(scale), len(func)))
+
+    w = np.zeros((len(scale), len(func)), dtype=np.complex)
 
     for i, scl in enumerate(scale):
         if scl == 0:

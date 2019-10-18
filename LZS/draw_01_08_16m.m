@@ -2,8 +2,8 @@ clear all
 close all
 clc
 
-Bbp=0.08;
-Bpb=0.19;
+Bbp=0.1;
+Bpb=0.2;
 B=[Bbp,Bpb];
 
 

@@ -34,7 +34,7 @@ f01 = f0;
 %Nt=1000;%number of time nodes
 Tmax=2000;%maximal time of calculations
 t = [0 Tmax];%linspace(0,Tmax,Nt);
-grate=(Bpbmax-Bpbmin)/Tmax;
+grate=(Bpbmax-Bpbmin)/Tmax;     
 
 
 %equations
