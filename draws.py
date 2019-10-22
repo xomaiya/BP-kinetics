@@ -4,7 +4,7 @@ from BP_dynamics import *
 from wavelets import *
 
 
-def phase_portrait(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2**13):
+def phase_portrait(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 13):
     sol, t = calcODE2(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
     z = [sol[:, 0], sol[:, 1], sol[:, 2], sol[:, 3], sol[:, 4], sol[:, 5]]
     Iext, G, Ein, Eex, eps, a, b, A, Bpbmin, Bpbmax, Bbp, vsl = args
@@ -24,7 +24,7 @@ def phase_portrait(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt
     plt.show()
 
 
-def signal_draw(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2**15):
+def signal_draw(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 15):
     sol, t = calcODE(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
 
     plt.figure(figsize=(20, 10))
@@ -37,7 +37,7 @@ def signal_draw(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2*
     plt.show()
 
 
-def signal_draw1(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2**15):
+def signal_draw1(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 15):
     sol, t = calcODE1(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
 
     plt.figure(figsize=(20, 10))
@@ -50,7 +50,7 @@ def signal_draw1(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2
     plt.show()
 
 
-def signal_draw2(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2**15):
+def signal_draw2(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 15):
     sol, t = calcODE2(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
 
     plt.figure(figsize=(20, 10))
@@ -79,4 +79,3 @@ def wavelet_draw(args, scale, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=200
     plt.yticks(ticks, scale[ticks])
 
     plt.imshow(np.abs(res), aspect='auto', origin='lower')
-
