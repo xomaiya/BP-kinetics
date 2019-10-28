@@ -9,6 +9,15 @@ def sAnalytics(v):
 
 
 def fftMorlet(t, func, scale, omega0):
+    """
+    Построение вейвлет-преобразования Морле
+
+    :param t: массив времен
+    :param func: функция, для которой проводится вейвлет-преобразование
+    :param scale: массив масштабов для вейвлета
+    :param omega0: нулевая частота (обычно, np.pi)
+    :return: массив функции с вейвлет-преобразованием
+    """
     N = len(t) // 2
     F = np.fft.fft(func)
     norm = 2 * np.pi / (t[-1] - t[0])
@@ -27,6 +36,14 @@ def fftMorlet(t, func, scale, omega0):
 
 
 def max_wavelet_bootstrap(args, scale, n_iters=100):
+    """
+    Параметры масштабирования, на которых достигается максимум вейвлет-функции (для построения графиков гистерезиса)
+
+    :param args: аргументы для CalcODE
+    :param scale: массив масштабов для вейвлетов
+    :param n_iters: количество шагов для набора статистики
+    :return: масштабирующие параметры
+    """
     arg_for_init_sol = args[0:10] + args[11:]
 
     sol_init, t = calcODE(arg_for_init_sol, 0, 0, 0, 0, 0, 0, ts=2000, nt=2 ** 13)

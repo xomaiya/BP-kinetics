@@ -10,9 +10,9 @@ clc
 % Bpbmax=0.26;
 % Bbp=0.12;
 
-Bpbmin=0.15;
-Bpbmax=0.25;
-Bbp=0.08;
+Bpbmin=0.25;
+Bpbmax=0.15;
+Bbp=0.1;
 
 %%
 % List of cases
