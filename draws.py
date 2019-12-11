@@ -80,8 +80,8 @@ def wavelet_draw(args, scale, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=200
 
     plt.imshow(np.abs(res), aspect='auto', origin='lower')
 
-def autocorrelation(args):
 
+def autocorrelation(args):
     PREC = 8
     T = 2 ** 20
     sol, t = calcODE(args, 0, 0, 0, 0, 0, 0, ts=T, nt=PREC * T)
