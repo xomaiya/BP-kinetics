@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy as sc
+from scipy.integrate import odeint
 from BP_dynamics import calcODE, ode
 
 
@@ -171,14 +172,52 @@ def jacobian(z, args):
     return J
 
 
-def multiplicators(args, ):
-    sol, t = calcODE(args, -1.5, -1.5, 0.5, 0.5, 0.5, 0.5, ts=2000, nt=2 ** 20)
-    z = sol[-1, :]
+def jacobian_x(z, x, args):
+    J = jacobian(x, args)
+    return J @ z
 
-    J = jacobian(z, args)
-    monodromy = sc.linalg.expm(J)
 
-    return np.linalg.eigvals(monodromy)
+def period(sol):
+    x0 = sol[0, :]
+    for i in range(100, sol.shape[0]):
+        if np.linalg.norm(sol[i, :] - x0) < 5e-3:
+            return i
+    return None
+
+
+def monodromy(args):
+    ts = 2000
+    nt = 2 ** 20
+    sol, t = calcODE(args, -1.5, -1.5, 0.5, 0.5, 0.5, 0.5, ts, nt)
+    T = period(sol[-nt//2:, :])
+    print(f'T = {T}')
+    sol = sol[-T:, :]
+    delta_t = t[-T:] - t[-T-1:-1]
+
+    Z = np.identity(6)
+    M = np.zeros((6, 6))
+    for j in range(6):
+        z = Z[:, j]
+        for i in range(0, T):
+            z += jacobian_x(z, sol[i, :], args) * delta_t[i]
+        M[:, j] = z
+    return M
+
+def floquet(args):
+    M = monodromy(args)
+    return np.linalg.eigvals(M)
+
+
+# def multiplicators(args, ):
+#     sol, t = calcODE(args, -1.5, -1.5, 0.5, 0.5, 0.5, 0.5, ts=2000, nt=2 ** 20)
+#     z = sol[-1, :]
+#
+#     J = jacobian(z, args)
+#     monodromy = sc.linalg.expm(J)
+#
+#     return np.linalg.eigvals(monodromy)
+
+
 
 
 
