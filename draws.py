@@ -1,84 +1,175 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from BP_dynamics import *
-from wavelets import *
+from BP_dynamics import calcODE, calcODE1, calcODE2
+from wavelets import sAnalytics, fftMorlet
 
 
-def phase_portrait(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 13):
-    sol, t = calcODE2(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
-    z = [sol[:, 0], sol[:, 1], sol[:, 2], sol[:, 3], sol[:, 4], sol[:, 5]]
-    Iext, G, Ein, Eex, eps, a, b, A, Bpbmin, Bpbmax, Bbp, vsl = args
-    dzdt = ode2(z, t, Iext, G, Ein, Eex, eps, a, b, A, Bpbmin, Bpbmax, Bbp, vsl, Tmax=2000)
-    vp = sol[:, 0]
-    vb = sol[:, 1]
-    dvpdt = dzdt[0]
-    dvbdt = dzdt[1]
+def phase_portrait(args, args1=None, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 13):
+    """
+    Функция отрисовки фазового портрета системы. Есть возможность нарисовать фп
+    для медленно меняющегося параметра Bpb (нужно раскомментировать 21 строчку с calcODE1)
+    или для медленно меняющегося параметра Bbp (нужно раскомменировать 22 строчку с calcODE2)
+
+    :param args: arguments of the BP-system
+    :param args1: расширенные параметры системы, включающие границы изменения параметра B (pb или bp)
+    :param vp0, vb0, up0, ub0, sbp0, spb0: fixed initial conditions
+    :param ts: time
+    :param nt: number of steps
+    :return: None
+    """
+    sol, t = calcODE(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
+    # sol, t = calcODE1(args1, *sol[-1], ts, nt)
+    # sol, t = calcODE2(args1, *sol[-1], ts, nt)
+    vp = sol[-nt // 2:, 0]
+    vb = sol[-nt // 2:, 1]
 
     plt.figure(figsize=(10, 10))
-    plt.plot(vp, dvpdt, 'b')
-    plt.plot(vb, dvbdt, 'r')
-    plt.xlabel('vp')
-    plt.ylabel('dvp/dt')
-    plt.title(f'Фазовый портрет для потенциала $\dot v_p(v_p)$\n ($Bbp = {args[10]}$, $Bpb = {args[8]}-{args[9]}$)')
+    plt.plot(vb, vp, 'b')
+    plt.xlabel('$v_b$')
+    plt.ylabel('$v_p$')
     plt.grid()
     plt.show()
 
 
-def signal_draw(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 15):
+def signal_draw(args, vp0=-1.5, vb0=-1.5, up0=0.5, ub0=0.5, sbp0=0.5, spb0=0.5, ts=2000, nt=2 ** 15):
+    """
+    Функция отрисовки временных рядов Vp и Vb
+    :param args: arguments of the BP-system
+    :param vp0, vb0, up0, ub0, sbp0, spb0: fixed initial conditions
+    :param ts: time
+    :param nt: number of steps
+    :return: None
+    """
     sol, t = calcODE(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
 
-    plt.figure(figsize=(20, 10))
-    plt.plot(np.linspace(0, ts, nt), sol[:, 0], 'b')
-    plt.plot(np.linspace(0, ts, nt), sol[:, 1], 'r')
-
-    plt.xlabel('t')
-    plt.ylabel('v_p')
-    plt.grid()
-    plt.show()
-
-
-def signal_draw1(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 15):
-    sol, t = calcODE1(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
-
-    plt.figure(figsize=(20, 10))
-    plt.plot(np.linspace(0, ts, nt), sol[:, 0], 'b')
-    plt.plot(np.linspace(0, ts, nt), sol[:, 1], 'r')
-
-    plt.xlabel('t')
-    plt.ylabel('v_p')
-    plt.grid()
-    plt.show()
-
-
-def signal_draw2(args, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 15):
-    sol, t = calcODE2(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
-
-    plt.figure(figsize=(20, 10))
-    plt.plot(np.linspace(0, ts, nt), sol[:, 0], 'b')
-    plt.plot(np.linspace(0, ts, nt), sol[:, 1], 'r')
+    plt.figure(figsize=(15, 5))
+    plt.plot(np.linspace(0, ts // 4, nt // 4), sol[-nt // 4:, 0], 'b')
+    plt.plot(np.linspace(0, ts // 4, nt // 4), sol[-nt // 4:, 1], 'r')
 
     plt.xlabel('t')
     plt.ylabel('$v_p$, $v_b$')
-    plt.title(f'Решение системы ФХН для $v_p, v_b$ ($Bbp = {args[10]}$, $Bpb = {args[8]}-{args[9]}$)')
     plt.grid()
     plt.show()
 
 
-def wavelet_draw(args, scale, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 13):
-    sol, t = calcODE2(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
+def signal_draw1(args, args1, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 20):
+    """
+    Функция отрисовки временных рядов Vp и Vb при медленном изменении параметра Bbp
+    По умолчанию оси подписываются как моменты времени, чтобы это изменить, нужно раскомменировать строки 72-73
+
+    :param args: arguments of the BP-system
+    :param args1: расширенные параметры системы, включающие границы изменения параметра Bbp
+    :param vp0, vb0, up0, ub0, sbp0, spb0: fixed initial conditions
+    :param ts: time
+    :param nt: number of steps
+    :return: None
+    """
+
+    sol, t = calcODE(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
+    sol, t = calcODE1(args1, *sol[-1], ts, nt)
+
+    plt.figure(figsize=(15, 5))
+    # plt.plot(np.linspace(args[9], args[10], nt), sol[:, 0], 'b')
+    # plt.plot(np.linspace(args[9], args[10], nt), sol[:, 1], 'r')
+    plt.plot(np.linspace(0, ts, nt), sol[:, 0], 'b')
+    plt.plot(np.linspace(0, ts, nt), sol[:, 1], 'r')
+
+    plt.xlabel('t')
+    # plt.xlabel('$B_{bp}$')
+    plt.ylabel('$v_p, v_b$')
+    plt.grid()
+    plt.show()
+
+
+def signal_draw2(args, args2=None, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=2000, nt=2 ** 15):
+    """
+    Функция отрисовки временных рядов Vp и Vb при медленном изменении параметра Bpb.
+    По умолчанию оси подписываются как моменты времени, чтобы это изменить, нужно раскомменировать строки 102-103
+
+    :param args: arguments of the BP-system
+    :param args2: расширенные параметры системы, включающие границы изменения параметра Bpb
+    :param vp0, vb0, up0, ub0, sbp0, spb0: fixed initial conditions
+    :param ts: time
+    :param nt: number of steps
+    :return: None
+    """
+
+    sol, t = calcODE(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
+    sol, t = calcODE2(args2, *sol[-1], ts, nt)
+
+    plt.figure(figsize=(15, 5))
+    # plt.plot(np.linspace(args2[8], args2[9], nt), sol[:, 0], 'b')
+    # plt.plot(np.linspace(args2[8], args2[9], nt), sol[:, 1], 'r')
+    plt.plot(np.linspace(0, ts, nt), sol[:, 0], 'b')
+    plt.plot(np.linspace(0, ts, nt), sol[:, 1], 'r')
+
+    plt.xlabel('t')
+    # plt.xlabel('$B_{pb}$')
+    plt.ylabel('$v_p$, $v_b$')
+    plt.grid()
+    plt.show()
+
+
+def wavelet_draw(args, args2, scale, vp0=-1.5, vb0=-1.5, up0=0.5, ub0=0.5, sbp0=0.5, spb0=0.5, ts=4000, nt=2 ** 15,
+                 Bmin=0.7, Bmax=0.9):
+    sol, t = calcODE(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
+    sol, t = calcODE2(args2, *sol[-1], ts, nt)
+
     vp = sol[:, 0]
     vp = sAnalytics(vp)
-    res = fftMorlet(t, vp, scale, np.pi)
-
-    plt.figure(figsize=(20, 10))
-    plt.title(f'CWT для потенциала $v_p$ ($Bbp = {args[10]}$, $Bpb = {args[8]}-{args[9]}$)')
-    plt.xlabel("nt")
-    plt.ylabel('a')
+    res = 2 * fftMorlet(t, vp, scale, 2 * np.pi)
+    fig, ax = plt.subplots(figsize=(15, 5))
+    plt.ylabel('ISI')
 
     ticks = np.array([0, len(res) // 4, len(res) // 2, 3 * len(res) // 4, len(res) - 1])
     plt.yticks(ticks, scale[ticks])
-
     plt.imshow(np.abs(res), aspect='auto', origin='lower')
+    xticks = np.linspace(0, nt, 10)
+    xlabels = np.array([round(i, 3) for i in np.linspace(Bmin, Bmax, 10)])
+    ax.set_xticks(xticks)
+    ax.set_xticklabels(xlabels)
+    ax.set_xlabel('$B_{pb}$')
+    plt.show()
+
+
+# def wavelet_draw_inv(args, scale, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=8000, nt=2 ** 13, Bmin=0.06, Bmax=0.1):
+#     # sol, t = calcODE2(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
+#
+#     args0 = (args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[10], args[11])
+#     sol, t = calcODE(args0, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
+#     sol, t = calcODE1(args, *sol[-1], ts, nt)
+#
+#     vp = sol[:, 0]
+#     vp = sAnalytics(vp)
+#     res = 2 * fftMorlet(t, vp, scale, 2 * np.pi)
+#     print(np.array(res.shape))
+#     fig, ax = plt.subplots(figsize=(15, 5))
+#     plt.ylabel('T')
+#
+#     ticks = np.array([0, len(res) // 4, len(res) // 2, 3 * len(res) // 4, len(res) - 1])
+#     plt.yticks(ticks, scale[ticks])
+#     plt.imshow(np.abs(res)[:, ::-1], aspect='auto', origin='lower')
+#     xticks = np.linspace(0, nt, 10)
+#     xlabels = np.array([round(i, 3) for i in np.linspace(Bmin, Bmax, 10)])
+#     ax.set_xticks(xticks)
+#     ax.set_xticklabels(xlabels)
+#     ax.set_xlabel('$B_{bp}$')
+#     plt.show()
+
+# def signal_draw1_inverse(args, vp0=-0.5, vb0=-0.5, up0=0, ub0=0, sbp0=0.5, spb0=0.4, ts=2000, nt=2 ** 15):
+#     sol, t = calcODE1(args, vp0, vb0, up0, ub0, sbp0, spb0, -ts, nt)
+#
+#     plt.figure(figsize=(15, 5))
+#     plt.plot(sol[:, 0], 'b')
+#     plt.plot(sol[:, 0], 'r')
+#
+#     plt.plot(np.linspace(0, ts, nt), sol[:, 0], 'b')
+#     plt.plot(np.linspace(0, ts, nt), sol[:, 1], 'r')
+#
+#     plt.xlabel('t')
+#     plt.ylabel('$v_p, v_b$')
+#     plt.grid()
+#     plt.show()
 
 
 def autocorrelation(args):

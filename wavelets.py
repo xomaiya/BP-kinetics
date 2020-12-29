@@ -15,7 +15,7 @@ def fftMorlet(t, func, scale, omega0):
     :param t: массив времен
     :param func: функция, для которой проводится вейвлет-преобразование
     :param scale: массив масштабов для вейвлета
-    :param omega0: нулевая частота (обычно, np.pi)
+    :param omega0: нулевая частота (обычно, 2 * np.pi)
     :return: массив функции с вейвлет-преобразованием
     """
     N = len(t) // 2
@@ -35,31 +35,29 @@ def fftMorlet(t, func, scale, omega0):
     return w
 
 
-def max_wavelet_bootstrap(args, scale, n_iters=100):
+def max_wavelet_bootstrap(args, args2, scale, n_iters=100, sol_init=(-1.5, -1.5, 0.5, 0.5, 0.5, 0.5)):
     """
     Параметры масштабирования, на которых достигается максимум вейвлет-функции (для построения графиков гистерезиса)
 
     :param args: аргументы для CalcODE
+    :param args2: аргументы для CalcODE2
     :param scale: массив масштабов для вейвлетов
     :param n_iters: количество шагов для набора статистики
     :return: масштабирующие параметры
     """
-    arg_for_init_sol = args[0:10] + args[11:]
 
-    sol_init, t = calcODE(arg_for_init_sol, 0, 0, 0, 0, 0, 0, ts=2000, nt=2 ** 13)
+    sol_init, t = calcODE(args, *sol_init, ts=4000, nt=2 ** 18)
     sol_init = sol_init[len(sol_init) // 2:]
 
     ws = None
-
     for _ in range(n_iters):
-        sol, t = calcODE1(args, *sol_init[np.random.randint(0, len(sol_init))], 2000, 2 ** 12)
-
-        w = fftMorlet(t, sol[:, 0], scale, np.pi)
+        sol, t = calcODE2(args2, *sol_init[np.random.randint(0, len(sol_init))], 2000, 2 ** 15)
+        w = fftMorlet(t, sol[:, 0], scale, 2 * np.pi)
         w = np.abs(w)
 
         if ws is None:
             ws = w[..., np.newaxis]
         else:
             ws = np.concatenate([ws, w[..., np.newaxis]], axis=-1)
-
-    return scale[np.argmax(np.quantile(ws, 0.25, axis=-1), axis=0)]
+    print(ws.shape)
+    return scale[np.argmax(np.quantile(ws, 0.75, axis=-1), axis=0)], ws
