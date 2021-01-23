@@ -5,21 +5,23 @@ from BP_dynamics import calcODE, ode
 
 def dist(x, x0, n):
     """
-    Вспомогательная функция, вычисляющая расстояние от точки до плоскости (Пуанкаре)
+    Auxiliary function for point-plane distance calculation
 
-    :param x: произвольная точка
-    :param x0: точка, через которую проходит плоскость
-    :param n: нормаль к плоскости
-    :return: расстояние
+    :param x: point
+    :param x0: point through which the plane passes
+    :param n: normal to plane
+    :return: distance
     """
     return abs(n / np.linalg.norm(n) @ (x - x0))
 
 
-def poincare(args, parameter, show=True):
+def poincare(args, parameter, initial_cinditions=(-1.5, -1.5, 0.5, 0.5, 0.5, 0.5), ts=4000, nt=2 ** 20, show=True):
     """
-    Отрисовка отображения Пуанкаре.
+    Poincare map plot.
+    Для использования этой функции необходимо определить свою динамическую систему,
+    задав функцию calcODE(args, *initial_conditions)
 
-    :param args: arguments of the BP-system
+    :param args: arguments of the dynamical system
     :return: periods, xs
     """
 
@@ -29,8 +31,7 @@ def poincare(args, parameter, show=True):
     if show:
         plt.figure(figsize=(10, 10))
 
-    sol, t = calcODE(args, -1.5, -1.5, 0.5, 0.5, 0.5, 0.5, ts=4000, nt=2 ** 20)
-    # sol, t = calcODE(args, 0, 0, 0, 0, 0, 0, ts=4000, nt=2 ** 15)
+    sol, t = calcODE(args, *initial_cinditions, ts=ts, nt=nt)
     sol = sol[-len(sol) // 2:, :]
 
     x0 = sol[0, :]
@@ -43,14 +44,13 @@ def poincare(args, parameter, show=True):
     for i in range(len(sol) - 1):
         x1 = sol[i]
         x2 = sol[i + 1]
-        # if np.sign(n @ (x1 - x0)) != np.sign(n @ (x2 - x0)):
-        if np.copysign((n @ (x1 - x0)), (n @ (x2-x0))) != (n @ (x1-x0)):
+        if np.sign(n @ (x2 - x0)) != np.sign(n @ (x1 - x0)):
             c1 = dist(x1, x0, n)
             c2 = dist(x2, x0, n)
             alpha = c2 / (c1 + c2)
             x_new = x1 + alpha * (x2 - x1)
             x = (x_new - x0).dot(q)
-            xs.append((parameter, x[0], x[1], x[2], x[3], x[4], x[5]))
+            xs.append((parameter, x))
             if show:
                 plt.scatter(x[1], x[2])
             if np.linalg.norm(x_new - x0) < 1e-3 and period is None:
@@ -66,7 +66,7 @@ def poincare(args, parameter, show=True):
 
 def bifurcation_diagram(args, Bpbmin, Bpbmax, ylim=(-1, 0.6)):
     """
-    Bifurcation diagram plot
+    Bifurcation diagram plot for BP-system.
 
     :param args: args of the BP-system
     :param Bpbmin: parameter of the BP-system
@@ -96,7 +96,7 @@ def bifurcation_diagram(args, Bpbmin, Bpbmax, ylim=(-1, 0.6)):
         for i in range(len(sol) - 1):
             x1 = sol[i]
             x2 = sol[i + 1]
-            if np.copysign((n @ (x1 - x0)), (n @ (x2 - x0))) != (n @ (x1 - x0)):
+            if np.sign(n @ (x2 - x0)) != np.sign(n @ (x1 - x0)):
                 c1 = dist(x1, x0, n)
                 c2 = dist(x2, x0, n)
                 alpha = c2 / (c1 + c2)
@@ -119,17 +119,18 @@ def bifurcation_diagram(args, Bpbmin, Bpbmax, ylim=(-1, 0.6)):
     return periods, xs
 
 
-def poincare_3D(args):
+def poincare_3D(args, initial_cinditions=(-1.5, -1.5, 0.5, 0.5, 0.5, 0.5), ts=4000, nt=2 ** 20):
     """
-    Poincare map in 3D
+    Poincare map in 3D.
 
-    :param args: arguments and parameters of the BP-system
+    :param args: arguments and parameters of dynamical system
     :return: None
     """
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection='3d')
 
-    sol, t = calcODE(args, -1.5, -1.5, 0.5, 0.5, 0.5, 0.5, ts=4000, nt=2 ** 20)
+    sol, t = calcODE(args, *initial_cinditions, ts=ts, nt=nt)
+
     sol = sol[-len(sol) // 2:, :]
     ax.plot(xs=sol[:, 0], ys=sol[:, 1], zs=sol[:, 2])
 
@@ -187,10 +188,10 @@ def monodromy(args):
     ts = 2000
     nt = 2 ** 20
     sol, t = calcODE(args, -1.5, -1.5, 0.5, 0.5, 0.5, 0.5, ts, nt)
-    T = period(sol[-nt//2:, :])
+    T = period(sol[-nt // 2:, :])
     print(f'T = {T}')
     sol = sol[-T:, :]
-    delta_t = t[-T:] - t[-T-1:-1]
+    delta_t = t[-T:] - t[-T - 1:-1]
 
     Z = np.identity(6)
     M = np.zeros((6, 6))
@@ -201,10 +202,10 @@ def monodromy(args):
         M[:, j] = z
     return M
 
+
 def floquet(args):
     M = monodromy(args)
     return np.linalg.eigvals(M)
-
 
 # def multiplicators(args, ):
 #     sol, t = calcODE(args, -1.5, -1.5, 0.5, 0.5, 0.5, 0.5, ts=2000, nt=2 ** 20)
@@ -214,8 +215,3 @@ def floquet(args):
 #     monodromy = sc.linalg.expm(J)
 #
 #     return np.linalg.eigvals(monodromy)
-
-
-
-
-
