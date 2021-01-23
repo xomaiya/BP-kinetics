@@ -38,7 +38,7 @@ def random_pert():
     return v / np.linalg.norm(v)
 
 
-def lyapunov_spectra2(args, initial_conditions, ts=8000, nt=2 ** 15):
+def lyapunov_spectra(args, initial_conditions, ts=8000, nt=2 ** 15):
     """
     Function for the Lyapunov exponents calculation (Benetin's algorithm)
 
