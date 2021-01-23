@@ -5,11 +5,11 @@ from BP_dynamics import calcODE, calcODE2
 
 def mean_T_vp(vp, t):
     """
-    Function for mean of period calculation
+    Function for mean of ISI calculation
 
     :param vp: time series as an array
     :param t: time
-    :return: mean of period for vp time series
+    :return: mean of ISI for vp time series
     """
 
     nt = len(t)
@@ -23,10 +23,11 @@ def mean_T_vp(vp, t):
 
 def T_of_attractors(args, initials_num):
     """
-    Calculate and plot of the histogram of the limit cycles periods
+    Calculate and plot of the histogram of the limit cycles ISIs
+
     :param args: arguments of the BP-system
-    :param initials_num: number of different initial conditions
-    :return: list of limit cycle periods
+    :param initials_num: number of different random initial conditions
+    :return: list of limit cycle ISIs
     """
     T = []
     vp_vb_T = []

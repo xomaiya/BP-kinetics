@@ -1,7 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy as sc
-from scipy.integrate import odeint
 from BP_dynamics import calcODE, ode
 
 

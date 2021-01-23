@@ -132,46 +132,6 @@ def wavelet_draw(args, args2, scale, vp0=-1.5, vb0=-1.5, up0=0.5, ub0=0.5, sbp0=
     plt.show()
 
 
-# def wavelet_draw_inv(args, scale, vp0=0, vb0=0, up0=0, ub0=0, sbp0=0, spb0=0, ts=8000, nt=2 ** 13, Bmin=0.06, Bmax=0.1):
-#     # sol, t = calcODE2(args, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
-#
-#     args0 = (args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[10], args[11])
-#     sol, t = calcODE(args0, vp0, vb0, up0, ub0, sbp0, spb0, ts, nt)
-#     sol, t = calcODE1(args, *sol[-1], ts, nt)
-#
-#     vp = sol[:, 0]
-#     vp = sAnalytics(vp)
-#     res = 2 * fftMorlet(t, vp, scale, 2 * np.pi)
-#     print(np.array(res.shape))
-#     fig, ax = plt.subplots(figsize=(15, 5))
-#     plt.ylabel('T')
-#
-#     ticks = np.array([0, len(res) // 4, len(res) // 2, 3 * len(res) // 4, len(res) - 1])
-#     plt.yticks(ticks, scale[ticks])
-#     plt.imshow(np.abs(res)[:, ::-1], aspect='auto', origin='lower')
-#     xticks = np.linspace(0, nt, 10)
-#     xlabels = np.array([round(i, 3) for i in np.linspace(Bmin, Bmax, 10)])
-#     ax.set_xticks(xticks)
-#     ax.set_xticklabels(xlabels)
-#     ax.set_xlabel('$B_{bp}$')
-#     plt.show()
-
-# def signal_draw1_inverse(args, vp0=-0.5, vb0=-0.5, up0=0, ub0=0, sbp0=0.5, spb0=0.4, ts=2000, nt=2 ** 15):
-#     sol, t = calcODE1(args, vp0, vb0, up0, ub0, sbp0, spb0, -ts, nt)
-#
-#     plt.figure(figsize=(15, 5))
-#     plt.plot(sol[:, 0], 'b')
-#     plt.plot(sol[:, 0], 'r')
-#
-#     plt.plot(np.linspace(0, ts, nt), sol[:, 0], 'b')
-#     plt.plot(np.linspace(0, ts, nt), sol[:, 1], 'r')
-#
-#     plt.xlabel('t')
-#     plt.ylabel('$v_p, v_b$')
-#     plt.grid()
-#     plt.show()
-
-
 def autocorrelation(args):
     PREC = 8
     T = 2 ** 20
