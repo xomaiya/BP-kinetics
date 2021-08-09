@@ -15,7 +15,7 @@ def dist(x, x0, n):
     return abs(n / np.linalg.norm(n) @ (x - x0))
 
 
-def poincare(args, parameter, initial_cinditions=(-1.5, -1.5, 0.5, 0.5, 0.5, 0.5), ts=4000, nt=2 ** 20, show=True):
+def poincare(args, parameter, initial_conditions=(-1.5, -1.5, 0.5, 0.5, 0.5, 0.5), ts=4000, nt=2 ** 20, show=True):
     """
     Poincare map plot.
     Для использования этой функции необходимо определить свою динамическую систему,
@@ -31,7 +31,7 @@ def poincare(args, parameter, initial_cinditions=(-1.5, -1.5, 0.5, 0.5, 0.5, 0.5
     if show:
         plt.figure(figsize=(10, 10))
 
-    sol, t = calcODE(args, *initial_cinditions, ts=ts, nt=nt)
+    sol, t = calcODE(args, *initial_conditions, ts=ts, nt=nt)
     sol = sol[-len(sol) // 2:, :]
 
     x0 = sol[0, :]
@@ -119,7 +119,7 @@ def bifurcation_diagram(args, Bpbmin, Bpbmax, ylim=(-1, 0.6)):
     return periods, xs
 
 
-def poincare_3D(args, initial_cinditions=(-1.5, -1.5, 0.5, 0.5, 0.5, 0.5), ts=4000, nt=2 ** 20):
+def poincare_3D(args, initial_conditions=(-1.5, -1.5, 0.5, 0.5, 0.5, 0.5), ts=4000, nt=2 ** 20):
     """
     Poincare map in 3D.
 
@@ -129,11 +129,12 @@ def poincare_3D(args, initial_cinditions=(-1.5, -1.5, 0.5, 0.5, 0.5, 0.5), ts=40
     fig = plt.figure(figsize=(10, 10))
     ax = fig.add_subplot(111, projection='3d')
 
-    sol, t = calcODE(args, *initial_cinditions, ts=ts, nt=nt)
+    sol, t = calcODE(args, *initial_conditions, ts=ts, nt=nt)
 
     sol = sol[-len(sol) // 2:, :]
     ax.plot(xs=sol[:, 0], ys=sol[:, 1], zs=sol[:, 2])
-
+    # T = period(sol[-nt // 2:, :])
+    # print(f'T = {T}, {t[T] - t[0]}')
     x0 = sol[0, :]
     t = t[-len(sol) // 2:]
     n = ode(x0, t, *args)
@@ -189,7 +190,8 @@ def monodromy(args):
     nt = 2 ** 20
     sol, t = calcODE(args, -1.5, -1.5, 0.5, 0.5, 0.5, 0.5, ts, nt)
     T = period(sol[-nt // 2:, :])
-    print(f'T = {T}')
+    print(f'T = {t[T] - t[0]}')
+
     sol = sol[-T:, :]
     delta_t = t[-T:] - t[-T - 1:-1]
 
