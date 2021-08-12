@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from BP_dynamics import calcODE, ode
+from scipy.integrate import odeint
+from tqdm.auto import trange
 
 
 def dist(x, x0, n):
@@ -151,7 +153,7 @@ def poincare_3D(args, initial_conditions=(-1.5, -1.5, 0.5, 0.5, 0.5, 0.5), ts=40
     plt.show()
 
 
-def jacobian(z, args):
+def jacobian(z, t, args):
     """
     BP-system jacobian
 
@@ -162,14 +164,27 @@ def jacobian(z, args):
     vp, vb, up, ub, sp, sb = z
     Iext, G, Ein, Eex, eps, a, b, A, Bpb, Bbp, vsl = args
     J = np.array([
-        [1 - vp ** 2 - G * sp, 0, -1, 0, 0, G * (Ein - vp)],
-        [0, 1 - vb ** 2 - G * sb, 0, -1, G * (Eex - vb), 0],
+        [1 - vp ** 2 - G * sb, 0, -1, 0, 0, G * (Ein - vp)],
+        [0, 1 - vb ** 2 - G * sp, 0, -1, G * (Eex - vb), 0],
         [eps, 0, -eps * b, 0, 0, 0],
         [0, eps, 0, -eps * b, 0, 0],
-        [A / 2 * (1 - sp) * vsl / np.cosh(vp / vsl) ** 2, 0, 0, 0, -A / 2 * (1 + np.tanh(vp / vsl) - Bpb), 0],
-        [0, A / 2 * (1 - sb) * vsl / np.cosh(vb / vsl) ** 2, 0, 0, 0, -A / 2 * (1 + np.tanh(vb / vsl) - Bbp)]
+        [A / 2 * (1 - sp) / (np.cosh(vp / vsl)) ** 2 / vsl, 0, 0, 0, -A / 2 * (1 + np.tanh(vp / vsl)) - Bpb, 0],
+        [0, A / 2 * (1 - sb) / (np.cosh(vb / vsl)) ** 2 / vsl, 0, 0, 0, -A / 2 * (1 + np.tanh(vb / vsl)) - Bbp]
     ])
     return J
+
+
+def flattened_jacobian(z, t, args):
+    return jacobian(z, t, args).flatten()
+
+
+def calc_ode_jac(args, z0, nt=2 ** 10):
+    sol0, t = calcODE(args, *z0, ts=2000, nt=nt)
+    ts = period(sol0[-nt // 2:, :])
+    t = np.linspace(0, ts, nt)
+    ode = flattened_jacobian
+    sol = odeint(ode, z0, t, args)
+    return sol, t
 
 
 def jacobian_x(z, x, args):
@@ -181,39 +196,59 @@ def period(sol):
     x0 = sol[0, :]
     for i in range(100, sol.shape[0]):
         if np.linalg.norm(sol[i, :] - x0) < 5e-3:
-            return i
-    return None
+            break
+
+    return i + np.argmin(np.linalg.norm(sol[i: int(i * 1.1)] - x0, axis=1))
 
 
-def monodromy(args):
-    ts = 2000
-    nt = 2 ** 20
-    sol, t = calcODE(args, -1.5, -1.5, 0.5, 0.5, 0.5, 0.5, ts, nt)
+def DE_monodromy(z, t, Iext, G, Ein, Eex, eps, a, b, A, Bpb, Bbp, vsl):
+    vp, vb, up, ub, sp, sb = z[:6]
+    M = z[6:].reshape((6, 6))
+    args = (Iext, G, Ein, Eex, eps, a, b, A, Bpb, Bbp, vsl)
+
+    dzdt = [vp - vp ** 3 / 3 - up + Iext + G * sb * (Ein - vp),
+            vb - vb ** 3 / 3 - ub + G * sp * (Eex - vb),
+            eps * (vp + a - b * up),
+            eps * (vb + a - b * ub),
+            A / 2 * (1 + np.tanh(vp / vsl)) * (1 - sp) - Bpb * sp,
+            A / 2 * (1 + np.tanh(vb / vsl)) * (1 - sb) - Bbp * sb]
+    dMdt = (jacobian(z[:6], t, args) @ M).reshape(-1)
+
+    return np.concatenate([dzdt, dMdt])
+
+
+def calcODE_monodromy(args, z0, ts, nt):
+    t = np.linspace(0, ts, nt)
+    sol = odeint(DE_monodromy, z0, t, args)
+    return sol, t
+
+
+def monodromy(args, initial_conditions, nt=2 ** 25):
+    sol, t = calcODE(args, *initial_conditions, 20000, nt)
     T = period(sol[-nt // 2:, :])
-    print(f'T = {t[T] - t[0]}')
+    T = t[T] - t[0]
+    print(f'T = {T}')
 
-    sol = sol[-T:, :]
-    delta_t = t[-T:] - t[-T - 1:-1]
+    initial_conditions_M = np.concatenate([sol[-1, :], np.eye(6).reshape(-1)])
+    sol_M, t = calcODE_monodromy(args, initial_conditions_M, ts=T, nt=2 ** 20)
 
-    Z = np.identity(6)
-    M = np.zeros((6, 6))
-    for j in range(6):
-        z = Z[:, j]
-        for i in range(0, T):
-            z += jacobian_x(z, sol[i, :], args) * delta_t[i]
-        M[:, j] = z
-    return M
+    M = sol_M[-1][6:].reshape((6, 6))  # - np.eye(6)
+    return M, T
 
 
-def floquet(args):
-    M = monodromy(args)
-    return np.linalg.eigvals(M)
+def floquet(args, initial_conditions):
+    M, T = monodromy(args, initial_conditions, nt=2 ** 25)
+    mus = np.linalg.eigvals(M)[1:]
+    print(f'Multipliers: {mus}')
+    print()
 
-# def multiplicators(args, ):
-#     sol, t = calcODE(args, -1.5, -1.5, 0.5, 0.5, 0.5, 0.5, ts=2000, nt=2 ** 20)
-#     z = sol[-1, :]
-#
-#     J = jacobian(z, args)
-#     monodromy = sc.linalg.expm(J)
-#
-#     return np.linalg.eigvals(monodromy)
+    print('Проверка условия с дивергенцией: ')
+    sol_cycle, t = calcODE(args, *initial_conditions, T, 2 ** 20)
+    res = 0
+    for i in trange(len(t)):
+        res += np.diag(jacobian(sol_cycle[i, :], (i * T) / len(t), args)).sum() * (t[1] - t[0])
+
+    print('These values must be almost the same')
+    print(np.product(mus), np.exp(res))
+
+    return mus
